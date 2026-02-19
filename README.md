@@ -1,109 +1,163 @@
 # Data Engineering Health Journey - Pipeline DATASUS
 
-Este repositório documenta a construção de um ecossistema de dados focado no setor de saúde pública brasileiro. O objetivo é transformar dados brutos do DATASUS em informação estratégica através de um pipeline moderno de engenharia de dados.
+Este repositório documenta a construção de um pipeline de dados focado
+no setor de saúde pública brasileira. O objetivo é transformar dados
+brutos do DATASUS em informação estruturada e analítica por meio de boas
+práticas de engenharia de dados.
+
+------------------------------------------------------------------------
+
+## Problema de Negócio
+
+Os dados públicos do DATASUS são disponibilizados em formato bruto
+(CSV), o que dificulta análicas comparativas, padronização de métricas e
+análises estratégicas.
+
+Este projeto organiza e modela esses dados para permitir:
+
+-   Análise da distribuição de leitos hospitalares por UF
+-   Comparação entre leitos totais e leitos SUS
+-   Ranking de especialização hospitalar por estado
+-   Consolidação de métricas analíticas reutilizáveis
+
+------------------------------------------------------------------------
 
 ## Arquitetura e Estratégia
 
-O projeto adota a filosofia ELT (Extract, Load, Transform), priorizando a ingestão bruta (RAW) para garantir a integridade dos dados antes da modelagem analítica.
+O projeto adota a filosofia **ELT (Extract, Load, Transform)**,
+priorizando a ingestão bruta (RAW) para garantir rastreabilidade e
+integridade dos dados antes da modelagem analítica.
 
-## Fluxo de Dados:
+### Fluxo de Dados
 
-[CSV Raw] ➔ [Python + Logging] ➔ [.env Secrets] ➔ [PostgreSQL (Bronze)] ➔ [Analytic CTEs].
+\[CSV Raw\] → \[Python + Logging\] → \[PostgreSQL - Bronze\] → \[Views
+Analíticas - Silver\] → \[Métricas - Gold\]
+
+### Camadas do Projeto
+
+-   **Bronze** → `raw_leitos` (dados originais, sem transformação)
+-   **Silver** → `vw_refined_leitos` (padronização, tratamento de nulos,
+    métricas calculadas)
+-   **Gold** → Rankings e métricas consolidadas para consumo analítico
+
+------------------------------------------------------------------------
 
 ## Estrutura do Repositório
 
-A organização segue padrões de projetos reais de engenharia de dados:
+    .
+    ├── data/
+    │   └── raw/
+    ├── infra/
+    ├── src/
+    │   ├── ingestion/      # Camada Bronze (Carga RAW)
+    │   ├── transformation/ # Camada Silver (Refino e Views Analíticas)
+    │   └── analytics/      # Camada Gold (Dashboards e Data Marts)
+    ├── docs/
+    └── README.md
 
-```text
-.
-├── data/
-│   └── raw/
-├── infra/
-├── src/
-│   ├── ingestion/     # RAW layer
-│   ├── transformation/ # STAGING / MART (dbt)
-│   └── analytics/     # Dashboard
-├── docs/
-└── README.md
-
-```
-
+------------------------------------------------------------------------
 
 ## Tecnologias e Infraestrutura
 
-- Python Libraries: Pandas, SQLAlchemy, python-dotenv, logging
-- Banco de Dados: PostgreSQL 17
-- Interface de Dados: pgAdmin 4
-- Orquestração de Infraestrutura: Docker Compose
-- Persistência: Volumes Docker para garantir a sobrevivência dos dados ao ciclo de vida dos containers
-- Controle de Versão: Git e GitHub
+-   **Linguagem:** Python\
+-   **Bibliotecas:** Pandas, SQLAlchemy, python-dotenv, logging\
+-   **Banco de Dados:** PostgreSQL 17\
+-   **Interface:** pgAdmin 4 / DBeaver\
+-   **Orquestração:** Docker Compose\
+-   **Persistência:** Volumes Docker\
+-   **Versionamento:** Git e GitHub
+
+------------------------------------------------------------------------
 
 ## Como Executar o Ambiente
 
-### Configuração de Variáveis de Ambiente
-O projeto utiliza um arquivo `.env` para gestão de credenciais sensíveis. 
-1. Renomeie o arquivo `infra/.env.example` para `infra/.env`.
-2. Ajuste as credenciais conforme necessário.
+### 1. Configuração de Variáveis de Ambiente
 
-### Pré-requisitos
+O projeto utiliza um arquivo `.env` para gestão de credenciais.
 
-- Docker Desktop instalado e rodando
-- Git para clonagem do repositório
+-   Renomeie `infra/.env.example` para `infra/.env`
+-   Ajuste as credenciais conforme necessário
 
-### Subindo a Infraestrutura
+### 2. Pré-requisitos
 
-```bash
-cd infra
-docker-compose up -d
-```
+-   Docker Desktop instalado e rodando
+-   Git
 
-### Acesso aos Serviços
+### 3. Subindo a Infraestrutura
 
-- pgAdmin: http://localhost:8080
-- PostgreSQL: Disponível na porta 5432
+    cd infra
+    docker-compose up -d
 
-### Como Validar a Ingestão
-Após rodar o script de ingestão, você pode validar o sucesso executando a query abaixo no pgAdmin ou DBeaver:
+### 4. Acesso aos Serviços
 
-```sql
-SELECT count(*) FROM raw_leitos;
--- Resultado esperado: 86.147 registros.
-```
+-   pgAdmin → http://localhost:8080\
+-   PostgreSQL → Porta 5432
 
-## Roadmap de Desenvolvimento (Módulo 1)
+------------------------------------------------------------------------
 
-- **Fase 1: Infraestrutura e Ambiente (Concluído)** 
-  - Estruturação do repositório.
-  - Implementação da infraestrutura persistente com Docker Compose.
-  - Configuração de ambiente virtual isolado (`.venv`) para desenvolvimento Python.
+## Validação da Ingestão
 
-- **Fase 2: Ingestão e Validação RAW (Concluído)** 
-  - Desenvolvimento do script `ingest_sus.py` utilizando **Python (Pandas + SQLAlchemy)**.
-  - Processamento e carga de **86.147 registros** de leitos hospitalares (CSV) para o PostgreSQL.
-  - Implementação de tratamento de strings, padronização de colunas e gestão de nulos com `COALESCE`.
-  - Criação de scripts de análise exploratória (`queries_exploratorias.sql`) para validação de métricas de saúde.
-  - Implementação de Logging Persistente para rastreabilidade de falhas no pipeline.
+Após executar o script de ingestão:
 
-- **Fase 3: Qualidade e CI/CD (Em progresso)** ⏳
-  - Configuração de Linters (SQLFluff) e automação via GitHub Actions.
+    SELECT COUNT(*) FROM raw_leitos;
 
-- Prática contínua:
-  - Resolução diária de problemas de lógica SQL para garantir maestria na manipulação dos dados de saúde
+Valide se o total corresponde ao número de linhas do CSV original.
+
+Validação da camada refinada:
+
+    SELECT * 
+    FROM vw_refined_leitos 
+    WHERE ranking_uti_uf <= 3;
+
+------------------------------------------------------------------------
+
+## Roadmap de Desenvolvimento
+
+### Fase 1 -- Infraestrutura (Concluído)
+
+-   Estruturação do repositório
+-   Configuração de Docker Compose com persistência via volumes
+-   Ambiente virtual isolado (`.venv`) para desenvolvimento Python
+
+### Fase 2 -- Ingestão e Modelagem Inicial (Concluído)
+
+-   Desenvolvimento do script `ingest_sus.py` (Pandas + SQLAlchemy)
+-   Carga de 86.147 registros para PostgreSQL
+-   Implementação de CTEs e Window Functions para cálculo de métricas
+-   Tratamento de nulos com `COALESCE` e prevenção de divisão por zero
+    com `NULLIF`
+-   Criação de Views analíticas (Camada Silver)
+-   Implementação de logging persistente para rastreabilidade
+
+### Fase 3 -- Qualidade e CI/CD (Em progresso)
+
+-   Integração de SQLFluff
+-   Automação com GitHub Actions
+
+------------------------------------------------------------------------
 
 ## Decisões de Engenharia
 
-- Foco em Resiliência:
-  A infraestrutura foi testada sob simulação de falha, utilizando docker-compose down, exclusão de conexões, reinicialização de hardware durante montagem de queries, para validar o mapeamento de volumes físicos e o perfeito funcionamento. 
+### Foco em Resiliência
 
-- Abordagem de Carga RAW:
-  Dados não são normalizados durante a ingestão para manter rastreabilidade.
+Testes de reinicialização de containers e validação da persistência via
+volumes Docker para garantir integridade dos dados.
+
+### Abordagem RAW First
+
+Os dados não são transformados durante a ingestão para preservar
+rastreabilidade e permitir reprocessamento controlado.
+
+------------------------------------------------------------------------
 
 ## Próximos Passos
 
-- Finalizar automação da ingestão
-- Iniciar modelagem com dbt
-- Evoluir pipeline com foco em qualidade
+-   Automatizar execução da ingestão
+-   Implementar modelagem com dbt
+-   Evoluir monitoramento e testes de qualidade de dados
+
+------------------------------------------------------------------------
 
 ## Licença
 
-Este projeto está sob a licença MIT License.
+Este projeto está sob a licença MIT.
