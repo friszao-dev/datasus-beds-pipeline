@@ -5,22 +5,22 @@ no setor de saúde pública brasileira. O objetivo é transformar dados
 brutos do DATASUS em informação estruturada e analítica por meio de boas
 práticas de engenharia de dados.
 
-------------------------------------------------------------------------
+---
 
 ## Problema de Negócio
 
-Os dados públicos do DATASUS são disponibilizados em formato bruto
-(CSV), o que dificulta análicas comparativas, padronização de métricas e
-análises estratégicas.
+Os dados públicos do DATASUS são disponibilizados em formato bruto (CSV),
+o que dificulta análises comparativas, padronização de métricas e decisões
+estratégicas.
 
 Este projeto organiza e modela esses dados para permitir:
 
--   Análise da distribuição de leitos hospitalares por UF
--   Comparação entre leitos totais e leitos SUS
--   Ranking de especialização hospitalar por estado
--   Consolidação de métricas analíticas reutilizáveis
+- Análise da distribuição de leitos hospitalares por UF e região
+- Comparação entre leitos totais e leitos SUS
+- Ranking de municípios por capacidade de UTI
+- Consolidação de métricas analíticas reutilizáveis
 
-------------------------------------------------------------------------
+---
 
 ## Arquitetura e Estratégia
 
@@ -29,134 +29,145 @@ priorizando a ingestão bruta (RAW) para garantir rastreabilidade e
 integridade dos dados antes da modelagem analítica.
 
 ### Fluxo de Dados
-
-\[CSV Raw\] → \[Python + Logging\] → \[PostgreSQL - Bronze\] → \[Views
-Analíticas - Silver\] → \[Métricas - Gold\]
+```
+[CSV Raw] → [Python + Logging] → [PostgreSQL - Bronze] → [Modelo Dimensional - Silver] → [Queries Analíticas - Gold]
+```
 
 ### Camadas do Projeto
 
--   **Bronze** → `raw_leitos` (dados originais, sem transformação)
--   **Silver** → `vw_refined_leitos` (padronização, tratamento de nulos,
-    métricas calculadas)
--   **Gold** → Rankings e métricas consolidadas para consumo analítico
+- **Bronze** → `raw_leitos` (dados originais, sem transformação)
+- **Silver** → Modelo dimensional normalizado (`leitos`, `municipios`, `tipos_unidade`)
+- **Gold** → Queries analíticas com JOIN, agregações e window functions
 
-------------------------------------------------------------------------
+---
+
+## Modelo Dimensional
+
+A tabela `raw_leitos` foi normalizada em um modelo relacional com três tabelas:
+```
+municipios (co_ibge PK, municipio, uf, regiao)
+        │
+        └──── leitos (cnes PK, nome_estabelecimento, co_ibge FK, co_tipo_unidade FK,
+                      leitos_existentes, leitos_sus, uti_total, tp_gestao)
+                                │
+tipos_unidade (co_tipo_unidade PK, ds_tipo_unidade)
+```
+
+**Decisões de engenharia:**
+- `DISTINCT` nos INSERTs das dimensões para garantir unicidade
+- `GROUP BY cnes` com `MAX`/`SUM` na fato para deduplicar registros da base pública
+- Chaves estrangeiras para garantir integridade referencial
+- Resultado: 7.369 estabelecimentos únicos sem duplicidade
+
+---
 
 ## Estrutura do Repositório
+```
+.
+├── data/
+│   └── raw/                    # CSV bruto (não versionado)
+├── infra/
+│   ├── docker-compose.yml
+│   └── .env.example
+├── src/
+│   ├── ingestion/
+│   │   ├── etl/ingest_sus.py   # Carga RAW para PostgreSQL
+│   │   └── sql/                # Scripts de setup e exploração
+│   ├── transformation/
+│   │   └── sql/
+│   │       └── 01_create_dimensional_model.sql
+│   └── analytics/
+│       └── sql/
+│           └── 02_analytical_queries.sql
+├── docs/
+└── README.md
+```
 
-    .
-    ├── data/
-    │   └── raw/
-    ├── infra/
-    ├── src/
-    │   ├── ingestion/      # Camada Bronze (Carga RAW)
-    │   ├── transformation/ # Camada Silver (Refino e Views Analíticas)
-    │   └── analytics/      # Camada Gold (Dashboards e Data Marts)
-    ├── docs/
-    └── README.md
-
-------------------------------------------------------------------------
+---
 
 ## Tecnologias e Infraestrutura
 
--   **Linguagem:** Python\
--   **Bibliotecas:** Pandas, SQLAlchemy, python-dotenv, logging\
--   **Banco de Dados:** PostgreSQL 17\
--   **Interface:** pgAdmin 4 / DBeaver\
--   **Orquestração:** Docker Compose\
--   **Persistência:** Volumes Docker\
--   **Versionamento:** Git e GitHub
+- **Linguagem:** Python
+- **Bibliotecas:** Pandas, SQLAlchemy, python-dotenv, logging
+- **Banco de Dados:** PostgreSQL 17
+- **Interface:** pgAdmin 4 / DBeaver
+- **Orquestração:** Docker Compose
+- **Persistência:** Volumes Docker
+- **Versionamento:** Git e GitHub
 
-------------------------------------------------------------------------
+---
 
 ## Como Executar o Ambiente
 
 ### 1. Configuração de Variáveis de Ambiente
 
-O projeto utiliza um arquivo `.env` para gestão de credenciais.
-
--   Renomeie `infra/.env.example` para `infra/.env`
--   Ajuste as credenciais conforme necessário
+- Renomeie `infra/.env.example` para `infra/.env`
+- Ajuste as credenciais conforme necessário
 
 ### 2. Pré-requisitos
 
--   Docker Desktop instalado e rodando
--   Git
+- Docker Desktop instalado e rodando
+- Git
+- Python 3.10+
 
 ### 3. Subindo a Infraestrutura
+```bash
+cd infra
+docker-compose up -d
+```
 
-    cd infra
-    docker-compose up -d
+### 4. Executando a Ingestão
+```bash
+cd src/ingestion/etl
+python ingest_sus.py
+```
 
-### 4. Acesso aos Serviços
+### 5. Acesso aos Serviços
 
--   pgAdmin → http://localhost:8080\
--   PostgreSQL → Porta 5432
+- pgAdmin → http://localhost:8080
+- PostgreSQL → Porta 5432
 
-------------------------------------------------------------------------
+---
 
-## Validação da Ingestão
+## Validação
+```sql
+-- Verifica total de registros ingeridos
+SELECT COUNT(*) FROM raw_leitos;
 
-Após executar o script de ingestão:
+-- Verifica integridade da fato (deve retornar vazio)
+SELECT cnes, COUNT(*)
+FROM leitos
+GROUP BY cnes
+HAVING COUNT(*) > 1;
+```
 
-    SELECT COUNT(*) FROM raw_leitos;
-
-Valide se o total corresponde ao número de linhas do CSV original.
-
-Validação da camada refinada:
-
-    SELECT * 
-    FROM vw_refined_leitos 
-    WHERE ranking_uti_uf <= 3;
-
-------------------------------------------------------------------------
+---
 
 ## Roadmap de Desenvolvimento
 
-### Fase 1 -- Infraestrutura (Concluído)
+### Fase 1 — Infraestrutura (Concluído)
+- Estruturação do repositório
+- Docker Compose com persistência via volumes
+- Ambiente virtual isolado
 
--   Estruturação do repositório
--   Configuração de Docker Compose com persistência via volumes
--   Ambiente virtual isolado (`.venv`) para desenvolvimento Python
+### Fase 2 — Ingestão e Modelagem (Concluído)
+- Script `ingest_sus.py` com Pandas + SQLAlchemy
+- Carga de 86.147 registros para PostgreSQL
+- Normalização em modelo dimensional (leitos, municipios, tipos_unidade)
+- Deduplicação e integridade referencial
+- Queries analíticas com JOIN, GROUP BY e Window Functions
+- Logging persistente para rastreabilidade
 
-### Fase 2 -- Ingestão e Modelagem Inicial (Concluído)
+### Fase 3 — Qualidade e CI/CD (Em progresso)
+- Integração de SQLFluff
+- Automação com GitHub Actions
 
--   Desenvolvimento do script `ingest_sus.py` (Pandas + SQLAlchemy)
--   Carga de 86.147 registros para PostgreSQL
--   Implementação de CTEs e Window Functions para cálculo de métricas
--   Tratamento de nulos com `COALESCE` e prevenção de divisão por zero
-    com `NULLIF`
--   Criação de Views analíticas (Camada Silver)
--   Implementação de logging persistente para rastreabilidade
+### Fase 4 — Cloud e dbt (Planejado)
+- Migração para AWS S3 + BigQuery
+- Modelagem com dbt
+- Dashboard no Looker Studio
 
-### Fase 3 -- Qualidade e CI/CD (Em progresso)
-
--   Integração de SQLFluff
--   Automação com GitHub Actions
-
-------------------------------------------------------------------------
-
-## Decisões de Engenharia
-
-### Foco em Resiliência
-
-Testes de reinicialização de containers e validação da persistência via
-volumes Docker para garantir integridade dos dados.
-
-### Abordagem RAW First
-
-Os dados não são transformados durante a ingestão para preservar
-rastreabilidade e permitir reprocessamento controlado.
-
-------------------------------------------------------------------------
-
-## Próximos Passos
-
--   Automatizar execução da ingestão
--   Implementar modelagem com dbt
--   Evoluir monitoramento e testes de qualidade de dados
-
-------------------------------------------------------------------------
+---
 
 ## Licença
 
