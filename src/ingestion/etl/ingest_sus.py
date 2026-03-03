@@ -16,7 +16,8 @@ logging.basicConfig(
 # Exemplo de como usar:
 logging.info("Iniciando processo de ingestão...")
 
-load_dotenv(os.path.join('infra', '.env'))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+load_dotenv(os.path.join(BASE_DIR, 'infra', '.env'))
 
 # 1. Configurações de Conexão usando os nomes alocados no .env
 DB_USER = os.getenv("POSTGRES_USER")
@@ -29,7 +30,7 @@ DB_PORT = "5432"
 engine = create_engine(f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_DB}")
 
 def run_ingestion():
-    file_path = os.path.join("data", "raw", "Leitos_2025.csv")
+    file_path = os.path.join(BASE_DIR, "data", "raw", "Leitos_2025.csv")
     
     logging.info(f"Iniciando leitura do arquivo: {file_path}")
     
