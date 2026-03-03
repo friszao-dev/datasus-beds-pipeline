@@ -1,4 +1,4 @@
-# Data Engineering Health Journey - Pipeline DATASUS
+# Pipeline de Dados de Leitos Hospitalares — DATASUS
 
 Este repositório documenta a construção de um pipeline de dados focado
 no setor de saúde pública brasileira. O objetivo é transformar dados
