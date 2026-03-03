@@ -65,14 +65,16 @@ tipos_unidade (co_tipo_unidade PK, ds_tipo_unidade)
 ```
 .
 ├── data/
-│   └── raw/                    # CSV bruto (não versionado)
+│   └── raw/                         # CSV bruto (não versionado)
 ├── infra/
 │   ├── docker-compose.yml
 │   └── .env.example
 ├── src/
 │   ├── ingestion/
-│   │   ├── etl/ingest_sus.py   # Carga RAW para PostgreSQL
-│   │   └── sql/                # Scripts de setup e exploração
+│   │   ├── etl/ingest_sus.py        # Carga RAW para PostgreSQL
+│   │   └── sql/
+│   │       ├── 01_bronze_exploratory_queries.sql
+│   │       └── 02_bronze_analytical_queries.sql
 │   ├── transformation/
 │   │   └── sql/
 │   │       └── 01_create_dimensional_model.sql
