@@ -99,7 +99,7 @@ WITH ranking_uti AS (
         nome_estabelecimento, 
         uti_total_exist,
         ROW_NUMBER() OVER(PARTITION BY uf ORDER BY uti_total_exist DESC) as posicao
-    FROM public.leitos
+    FROM raw_leitos
     WHERE uti_total_exist > 0 -- Apenas quem tem UTI
 )
 SELECT 
