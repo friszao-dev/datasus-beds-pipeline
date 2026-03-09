@@ -1,11 +1,11 @@
--- 1. Distribuição de Leitos por Tipo de Gestão (Estadual, Municipal, etc.)
+-- 1. Distribuição de Leitos por Tipo de Gestão
 select tp_gestao, SUM(leitos_existentes) AS total_leitos
 FROM raw_leitos
 GROUP BY tp_gestao
 ORDER BY total_leitos DESC;
 
 
--- 2. Percentual de Leitos SUS vs Total (Visão de Eficiência)
+-- 2. Percentual de Leitos SUS vs Total
 
 -- Visão geral (Brasil todo)
 select SUM(leitos_existentes) AS total_leitos, SUM(leitos_sus) AS total_leitos_sus,
@@ -28,7 +28,7 @@ FROM raw_leitos
 GROUP BY uf, municipio
 ORDER BY percentual_sus DESC;
 
--- Percentual de Leitos SUS utilizando WITH
+-- Percentual de Leitos SUS 
 WITH totais AS (SELECT
 SUM(leitos_existentes) AS total_leitos,
 SUM(leitos_sus) AS total_leitos_sus
@@ -39,7 +39,7 @@ ROUND(total_leitos_sus * 100.0 / NULLIF(total_leitos, 0), 2) AS percentual_sus
 FROM totais;
 
 
--- 3. Identificação de Cidades com Leitos de UTI (Filtro Crítico)
+-- 3. Identificação de Cidades com Leitos de UTI 
 
 -- Municípios que possuem qualquer tipo de UTI
 SELECT DISTINCT

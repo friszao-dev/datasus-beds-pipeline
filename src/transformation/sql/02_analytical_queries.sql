@@ -86,4 +86,13 @@ HAVING COUNT(*) > 1;
 -- Redução de tempo com índice: 8.177ms > 4.544ms na query analítica
 
 
-
+-- Análise de cardinalidade para decisão de índices
+-- Alta cardinalidade = bom candidato a índice
+-- Baixa cardinalidade = índice inútil, banco fará Seq Scan de qualquer forma
+SELECT 
+    COUNT(DISTINCT cnes)            AS card_cnes,           -- 7369 = cardinalidade máxima (PK)
+    COUNT(DISTINCT co_ibge)         AS card_co_ibge,        -- 3577 = alta, índice criado
+    COUNT(DISTINCT co_tipo_unidade) AS card_tipo_unidade,   -- 5 = baixa, índice desnecessário
+    COUNT(DISTINCT tp_gestao)       AS card_tp_gestao,      -- 3 = mínima, índice prejudicial
+    COUNT(*)                        AS total_registros      -- 7369
+FROM leitos;
