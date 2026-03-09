@@ -26,7 +26,9 @@ Este projeto organiza e modela esses dados para permitir:
 
 O projeto adota a filosofia **ELT (Extract, Load, Transform)**,
 priorizando a ingestão bruta (RAW) para garantir rastreabilidade e
-integridade dos dados antes da modelagem analítica.
+integridade dos dados antes da modelagem analítica. A ingestão utiliza
+estratégia **replace** na camada Bronze — garantindo que a `raw_leitos`
+sempre reflita o estado atual da fonte com todas as colunas originais do CSV.
 
 ### Fluxo de Dados
 ```
@@ -159,6 +161,10 @@ HAVING COUNT(*) > 1;
 - Deduplicação e integridade referencial
 - Queries analíticas com JOIN, GROUP BY e Window Functions
 - Logging persistente para rastreabilidade
+- Ingestão idempotente com deduplicação por CNES
+- Análise de performance com EXPLAIN ANALYZE e índices
+- Implementação de SCD Tipo 2 com documentação de limitação de surrogate key
+- Validação de cardinalidade para decisão de índices
 
 ### Fase 3 — Qualidade e CI/CD (Em progresso)
 - Integração de SQLFluff
