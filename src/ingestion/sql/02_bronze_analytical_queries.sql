@@ -1,9 +1,9 @@
 -- ==========================================================
--- NÍVEL 1: FILTROS E BUSCAS BÁSICAS (WHERE / LIKE)
+-- NÍVEL 1: FILTROS E BUSCAS BÁSICAS (where / LIKE)
 -- ==========================================================
 
 -- 1. Ver apenas hospitais de um estado específico (SP)
-select uf, nome_estabelecimento from public.raw_leitos
+select uf, nome_estabelecimento from raw_leitos
 where uf = 'SP';
 
 -- 2. Filtro numérico: Hospitais com mais de 10 leitos de UTI Adulto SUS
@@ -20,11 +20,11 @@ where uf = 'RJ' and uti_pediatrico_sus > 5;
 
 
 -- ==========================================================
--- NÍVEL 2: AGREGAÇÕES E ESTATÍSTICAS (SUM / COUNT / AVG)
+-- NÍVEL 2: AGREGAÇÕES E ESTATÍSTICAS (sum / COUNT / AVG)
 -- ==========================================================
 
 -- 5. Soma total nacional: O volume total de leitos no Brasil
-select SUM(leitos_existentes) as total_brasil from raw_leitos;
+select sum(leitos_existentes) as total_brasil from raw_leitos;
 
 -- 6. Contagem de registros: Quantidade de hospitais por estado
 select uf, count(*) as total_hospitais 
@@ -33,7 +33,7 @@ group by uf
 order by 2 desc;
 
 -- 7. Soma por grupo: Total de leitos por estado (Ordenado do maior para o menor)
-select uf, SUM(leitos_existentes) as total_leitos
+select uf, sum(leitos_existentes) as total_leitos
 from raw_leitos
 group by uf
 order by 2 desc;
@@ -93,20 +93,20 @@ order by total_estabelecimentos desc;
 -- ==========================================================
 
 -- 14. Ranking dos 3 maiores hospitais por número de UTIs em cada UF
-WITH ranking_uti AS (
-    SELECT 
+with ranking_uti AS (
+    select 
         uf, 
         nome_estabelecimento, 
         uti_total_exist,
-        ROW_NUMBER() OVER(PARTITION BY uf ORDER BY uti_total_exist DESC) as posicao
-    FROM raw_leitos
-    WHERE uti_total_exist > 0 -- Apenas quem tem UTI
+        ROW_NUMBER() OVER(PARTITION by uf order by uti_total_exist desc) as posicao
+    from raw_leitos
+    where uti_total_exist > 0 -- Apenas quem tem UTI
 )
-SELECT 
+select 
     uf, 
     nome_estabelecimento, 
     uti_total_exist,
     posicao
-FROM ranking_uti
-WHERE posicao <= 3 -- Filtra apenas o Top 3 de cada estado
-ORDER BY uf, posicao;
+from ranking_uti
+where posicao <= 3 -- Filtra apenas o Top 3 de cada estado
+order by uf, posicao;

@@ -95,7 +95,8 @@ tipos_unidade (co_tipo_unidade PK, ds_tipo_unidade)
 │   │       └── 02_bronze_analytical_queries.sql
 │   ├── transformation/
 │   │   └── sql/
-│   │       └── 01_create_dimensional_model.sql
+│   │       ├── 01_create_dimensional_model.sql
+│   │       └── 03_scd_type2_municipios.sql
 │   └── analytics/
 │       └── sql/
 │           └── 02_analytical_queries.sql
