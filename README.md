@@ -22,6 +22,23 @@ Este projeto organiza e modela esses dados para permitir:
 
 ---
 
+## Sobre o Dataset
+
+Fonte: DATASUS — Cadastro Nacional de Estabelecimentos de Saúde (CNES)
+Período: 2025
+Registros: 86.147 linhas brutas → 7.369 estabelecimentos únicos após deduplicação
+
+Campos utilizados:
+- `cnes` — código único do estabelecimento
+- `co_ibge` — código do município
+- `co_tipo_unidade` — tipo de unidade de saúde
+- `leitos_existentes` — total de leitos do estabelecimento
+- `leitos_sus` — leitos disponíveis para o SUS
+- `uti_total` — leitos de UTI
+- `tp_gestao` — tipo de gestão (Municipal, Estadual, Dupla)
+
+---
+
 ## Arquitetura e Estratégia
 
 O projeto adota a filosofia **ELT (Extract, Load, Transform)**,
@@ -101,6 +118,8 @@ tipos_unidade (co_tipo_unidade PK, ds_tipo_unidade)
 │       └── sql/
 │           └── 02_analytical_queries.sql
 ├── docs/
+│   └── images/
+│       └── dashboard.png
 └── README.md
 ```
 
