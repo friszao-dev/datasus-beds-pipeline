@@ -1,6 +1,5 @@
 version: '3.8'
 name: datasus-beds
-
 services:
   postgres-saude:
     image: postgres:17
@@ -15,7 +14,6 @@ services:
       - pgdata_saude:/var/lib/postgresql/data
     networks:
       - rede-saude
-
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin-saude
@@ -28,10 +26,19 @@ services:
       - postgres-saude
     networks:
       - rede-saude
-
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase-saude
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: h2
+    depends_on:
+      - postgres-saude
+    networks:
+      - rede-saude
 networks:
   rede-saude:
     driver: bridge
-
 volumes:
   pgdata_saude:

@@ -32,7 +32,17 @@ sempre reflita o estado atual da fonte com todas as colunas originais do CSV.
 
 ### Fluxo de Dados
 ```
-[CSV Raw] → [Python + Logging] → [PostgreSQL - Bronze] → [Modelo Dimensional - Silver] → [Queries Analíticas - Gold]
+DATASUS (CNES)
+      ↓
+Python ingestion
+      ↓
+Bronze — raw_leitos (dados originais)
+      ↓
+Silver — leitos + municipios + tipos_unidade
+      ↓
+Gold — queries analíticas
+      ↓
+Metabase Dashboard
 ```
 
 ### Camadas do Projeto
@@ -60,6 +70,12 @@ tipos_unidade (co_tipo_unidade PK, ds_tipo_unidade)
 - `GROUP BY cnes` com `MAX`/`SUM` na fato para deduplicar registros da base pública
 - Chaves estrangeiras para garantir integridade referencial
 - Resultado: 7.369 estabelecimentos únicos sem duplicidade
+
+---
+
+## Dashboard Analítico
+
+![Dashboard Análise de Leitos Hospitalares](docs/images/dashboard.png)
 
 ---
 
@@ -98,6 +114,7 @@ tipos_unidade (co_tipo_unidade PK, ds_tipo_unidade)
 - **Orquestração:** Docker Compose
 - **Persistência:** Volumes Docker
 - **Versionamento:** Git e GitHub
+- **Visualização:** Metabase
 
 ---
 
@@ -130,6 +147,7 @@ python ingest_sus.py
 
 - pgAdmin → http://localhost:8080
 - PostgreSQL → Porta 5432
+- Metabase → http://localhost:3000
 
 ---
 
@@ -165,6 +183,7 @@ HAVING COUNT(*) > 1;
 - Análise de performance com EXPLAIN ANALYZE e índices
 - Implementação de SCD Tipo 2 com documentação de limitação de surrogate key
 - Validação de cardinalidade para decisão de índices
+- Dashboard analítico com Metabase (ranking, distribuição regional e por tipo de gestão)
 
 ### Fase 3 — Qualidade e CI/CD (Em progresso)
 - Integração de SQLFluff
