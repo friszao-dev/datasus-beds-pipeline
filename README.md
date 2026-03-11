@@ -205,7 +205,7 @@ HAVING COUNT(*) > 1;
 - Validação de cardinalidade para decisão de índices
 - Dashboard analítico com Metabase (ranking, distribuição regional e por tipo de gestão)
 
-### Fase 3 — Qualidade e CI/CD (Em progresso)
+### Fase 3 — Qualidade e CI/CD (Concluído)
 - Integração de SQLFluff
 - Automação com GitHub Actions
 
