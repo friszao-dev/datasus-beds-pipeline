@@ -24,12 +24,13 @@ load_dotenv(os.path.join(BASE_DIR, 'infra', '.env'))
 # Configurações de Conexão
 DB_USER = os.getenv("POSTGRES_USER")
 DB_PASS = os.getenv("POSTGRES_PASSWORD")
-DB_DB   = os.getenv("POSTGRES_DB")
+DB_DB = os.getenv("POSTGRES_DB")
 DB_HOST = "localhost"
 DB_PORT = "5432"
 
 # Criando a conexão com o banco
 engine = create_engine(f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_DB}")
+
 
 def run_ingestion():
     file_path = os.path.join(BASE_DIR, "data", "raw", "Leitos_2025.csv")
@@ -60,5 +61,7 @@ def run_ingestion():
         print(f"❌ {erro_msg}")
         logging.error(erro_msg)
 
+
 if __name__ == "__main__":
     run_ingestion()
+    
